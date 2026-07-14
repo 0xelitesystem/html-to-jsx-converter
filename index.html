@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HTML to JSX Converter</title>
+<meta name="description" content="Paste HTML and get valid JSX. Renames class to className and for to htmlFor, camelCases attributes, converts inline styles to objects, self-closes void elements, and rewrites comments. Runs in your browser.">
+<link rel="canonical" href="https://0xelitesystem.github.io/html-to-jsx-converter/">
+<meta property="og:type" content="website">
+<meta property="og:title" content="HTML to JSX Converter">
+<meta property="og:description" content="Paste HTML and get valid JSX. Best-effort static transform that runs entirely in your browser.">
+<meta property="og:url" content="https://0xelitesystem.github.io/html-to-jsx-converter/">
+<meta name="twitter:card" content="summary">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "HTML to JSX Converter",
+  "description": "Paste HTML and get valid JSX. Renames class to className and for to htmlFor, camelCases attributes, converts inline styles to objects, self-closes void elements, and rewrites comments.",
+  "url": "https://0xelitesystem.github.io/html-to-jsx-converter/",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "author": { "@type": "Organization", "name": "0xelitesystem" }
+}
+</script>
+<style>
+:root {
+  --bg: #fafaf6;
+  --surface: #ffffff;
+  --ink: #0a1d1e;
+  --ink-soft: #2c4a4c;
+  --rule: #c8d4d3;
+  --teal: #0f5c60;
+  --teal-deep: #0a4548;
+  --gold: #b07d2a;
+  --gold-deep: #8a611f;
+  --ok: #1a5c2e;
+  --warn: #8a5a00;
+  --err: #8b1a1a;
+  --code-bg: #f0ebe1;
+}
+[data-theme="dark"] {
+  --bg: #0c1c1d;
+  --surface: #14292a;
+  --ink: #e8ebe6;
+  --ink-soft: #b0c0bd;
+  --rule: #2a4042;
+  --teal: #4ab4ba;
+  --teal-deep: #6dc8ce;
+  --gold: #d4a155;
+  --gold-deep: #e6b876;
+  --ok: #6dd380;
+  --warn: #d4a155;
+  --err: #e88080;
+  --code-bg: #0a1718;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  font-family: ui-serif, Georgia, "Times New Roman", serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100vh;
+  padding: 2rem 1rem;
+  line-height: 1.55;
+}
+.wrap { max-width: 1100px; margin: 0 auto; }
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  border-bottom: 2px solid var(--teal);
+  padding-bottom: 1rem;
+  margin-bottom: 2rem;
+}
+h1 {
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--teal);
+}
+.tag {
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.75rem;
+  color: var(--gold-deep);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+[data-theme="dark"] .tag { color: var(--gold); }
+.theme-btn {
+  background: transparent;
+  border: 1px solid var(--rule);
+  color: var(--ink-soft);
+  padding: 0.4rem 0.85rem;
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  border-radius: 2px;
+}
+.theme-btn:hover { border-color: var(--teal); color: var(--teal); }
+.lede {
+  font-size: 0.95rem;
+  color: var(--ink-soft);
+  margin-bottom: 1.5rem;
+  max-width: 64ch;
+}
+.disclaimer {
+  font-size: 0.82rem;
+  color: var(--warn);
+  background: var(--code-bg);
+  border-left: 3px solid var(--gold);
+  padding: 0.65rem 0.85rem;
+  border-radius: 2px;
+  margin-bottom: 1.75rem;
+  max-width: 70ch;
+}
+.panels { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
+@media (max-width: 820px) { .panels { grid-template-columns: 1fr; } }
+.panel {
+  background: var(--surface);
+  border: 1px solid var(--rule);
+  padding: 1.25rem;
+  border-radius: 3px;
+}
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.6rem;
+}
+label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--ink-soft);
+}
+textarea {
+  width: 100%;
+  min-height: 340px;
+  background: var(--code-bg);
+  border: 1px solid var(--rule);
+  color: var(--ink);
+  padding: 0.85rem;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.82rem;
+  line-height: 1.55;
+  resize: vertical;
+  border-radius: 2px;
+  white-space: pre;
+  overflow-wrap: normal;
+  tab-size: 2;
+}
+textarea:focus { outline: 2px solid var(--teal); outline-offset: 1px; }
+textarea[readonly] { color: var(--ink); }
+.btn-row { display: flex; gap: 0.75rem; flex-wrap: wrap; margin-bottom: 1.75rem; }
+button.act {
+  font-family: inherit;
+  font-size: 0.85rem;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: 2px;
+}
+button.act:hover { border-color: var(--teal); }
+button.primary {
+  background: var(--teal);
+  border-color: var(--teal);
+  color: var(--surface);
+  font-weight: 600;
+}
+[data-theme="dark"] button.primary { color: var(--bg); }
+button.primary:hover { background: var(--teal-deep); border-color: var(--teal-deep); }
+.copy-btn {
+  font-family: inherit;
+  font-size: 0.75rem;
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--rule);
+  background: var(--surface);
+  color: var(--ink);
+  cursor: pointer;
+  border-radius: 2px;
+}
+.copy-btn:hover { border-color: var(--teal); color: var(--teal); }
+.error-msg {
+  color: var(--err);
+  font-size: 0.85rem;
+  margin-top: 0.85rem;
+  padding: 0.65rem;
+  background: var(--code-bg);
+  border-left: 3px solid var(--err);
+  border-radius: 2px;
+}
+.privacy-note {
+  font-size: 0.78rem;
+  color: var(--gold-deep);
+  margin-top: 1.5rem;
+}
+[data-theme="dark"] .privacy-note { color: var(--gold); }
+footer {
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  display: flex;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+}
+footer a { color: var(--teal); text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+@media (max-width: 640px) {
+  body { padding: 1rem 0.75rem; }
+  h1 { font-size: 1.4rem; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>HTML to JSX Converter</h1>
+    <div class="tag">Paste HTML, get JSX</div>
+  </div>
+  <button class="theme-btn" id="theme-toggle" type="button">Dark</button>
+</header>
+
+<p class="lede">Paste HTML and get JSX you can drop into a React component. It renames <code>class</code> to <code>className</code> and <code>for</code> to <code>htmlFor</code>, camelCases the attributes JSX expects, turns inline <code>style="..."</code> strings into style objects, self-closes void elements, and rewrites HTML comments. The HTML is parsed, never executed. Nothing leaves this page.</p>
+
+<div class="disclaimer">Best-effort static transform. It does not convert <code>&lt;script&gt;</code> bodies, inline event handler strings (<code>onclick="..."</code>), or template syntax. Review the output before shipping.</div>
+
+<div class="btn-row">
+  <button class="act primary" id="convert-btn" type="button">Convert to JSX</button>
+  <button class="act" id="example-btn" type="button">Load example</button>
+  <button class="act" id="clear-btn" type="button">Clear</button>
+</div>
+
+<div class="panels">
+  <div class="panel">
+    <div class="panel-head"><label for="html-input">HTML input</label></div>
+    <textarea id="html-input" placeholder="&lt;div class=&quot;card&quot;&gt;&#10;  &lt;label for=&quot;name&quot;&gt;Name&lt;/label&gt;&#10;  &lt;input id=&quot;name&quot; type=&quot;text&quot;&gt;&#10;&lt;/div&gt;" spellcheck="false" autocapitalize="off" autocorrect="off"></textarea>
+  </div>
+  <div class="panel">
+    <div class="panel-head"><label for="jsx-output">JSX output</label><button class="copy-btn" id="copy-btn" type="button">Copy</button></div>
+    <textarea id="jsx-output" readonly spellcheck="false"></textarea>
+  </div>
+</div>
+
+<div id="error-box"></div>
+
+<p class="privacy-note">All conversion happens locally in your browser using the built-in HTML parser. Your markup is never sent to any server.</p>
+
+<footer>
+  <div>HTML to JSX Converter. Open source, MIT licensed. Works offline, no external dependencies.</div>
+  <div><a href="https://elitesystem.ai" target="_blank" rel="noopener">elitesystem.ai</a></div>
+</footer>
+</div>
+
+<script>
+const $ = (id) => document.getElementById(id);
+
+const themeBtn = $("theme-toggle");
+function setTheme(t) {
+  document.documentElement.setAttribute("data-theme", t);
+  themeBtn.textContent = t === "dark" ? "Light" : "Dark";
+}
+themeBtn.addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme") || "light";
+  setTheme(cur === "dark" ? "light" : "dark");
+});
+
+// Void elements that must self-close in JSX
+const VOID = new Set(["area","base","br","col","embed","hr","img","input","keygen","link","meta","param","source","track","wbr"]);
+
+// Attributes that keep their exact casing (mostly not hyphenated, handled below).
+// Direct renames from HTML attribute -> JSX prop.
+const RENAME = {
+  "class": "className",
+  "for": "htmlFor",
+  "tabindex": "tabIndex",
+  "readonly": "readOnly",
+  "maxlength": "maxLength",
+  "minlength": "minLength",
+  "cellpadding": "cellPadding",
+  "cellspacing": "cellSpacing",
+  "colspan": "colSpan",
+  "rowspan": "rowSpan",
+  "contenteditable": "contentEditable",
+  "crossorigin": "crossOrigin",
+  "datetime": "dateTime",
+  "enctype": "encType",
+  "formaction": "formAction",
+  "formenctype": "formEncType",
+  "formmethod": "formMethod",
+  "formnovalidate": "formNoValidate",
+  "formtarget": "formTarget",
+  "hreflang": "hrefLang",
+  "autocomplete": "autoComplete",
+  "autofocus": "autoFocus",
+  "autoplay": "autoPlay",
+  "novalidate": "noValidate",
+  "spellcheck": "spellCheck",
+  "srcset": "srcSet",
+  "usemap": "useMap",
+  "accesskey": "accessKey",
+  "acceptcharset": "acceptCharset",
+  "inputmode": "inputMode",
+  "srcdoc": "srcDoc",
+  "srclang": "srcLang",
+  "referrerpolicy": "referrerPolicy",
+  "playsinline": "playsInline",
+  "allowfullscreen": "allowFullScreen",
+  "marginwidth": "marginWidth",
+  "marginheight": "marginHeight",
+  "frameborder": "frameBorder"
+};
+
+// Attribute prefixes that stay lowercase / hyphenated in JSX (passed through as-is).
+function isPassthroughAttr(name) {
+  return name.startsWith("data-") || name.startsWith("aria-");
+}
+
+// Boolean attributes: in HTML they can appear valueless; in JSX give them ={true}
+const BOOLEAN_ATTRS = new Set([
+  "checked","selected","disabled","readonly","multiple","controls","autoplay",
+  "loop","muted","required","hidden","open","reversed","async","defer",
+  "novalidate","formnovalidate","autofocus","default","ismap","nomodule","allowfullscreen","playsinline","itemscope"
+]);
+
+// Convert a hyphenated attribute name to camelCase (for SVG etc.), preserving known passthroughs.
+function camelCaseAttr(name) {
+  if (RENAME[name]) return RENAME[name];
+  if (isPassthroughAttr(name)) return name;
+  if (name.indexOf("-") === -1) return name;
+  // SVG namespaced like xml:lang / xlink:href use colon; keep as-is (JSX allows some)
+  return name.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+}
+
+// Turn "color: red; font-size: 12px" into { color: 'red', fontSize: '12px' }
+function styleStringToObject(styleStr) {
+  const decls = styleStr.split(";");
+  const pairs = [];
+  for (let decl of decls) {
+    decl = decl.trim();
+    if (!decl) continue;
+    const idx = decl.indexOf(":");
+    if (idx === -1) continue;
+    let prop = decl.slice(0, idx).trim();
+    let val = decl.slice(idx + 1).trim();
+    if (!prop) continue;
+    // custom properties (--foo) keep their exact name and must be quoted
+    let key;
+    if (prop.startsWith("--")) {
+      key = "'" + prop + "'";
+    } else {
+      key = prop.toLowerCase().replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+    }
+    const safeVal = val.replace(/\\/g, "\\\\").replace(/'/g, "\\'");
+    pairs.push(key + ": '" + safeVal + "'");
+  }
+  return "{ " + pairs.join(", ") + " }";
+}
+
+function serializeAttrs(el) {
+  let out = "";
+  for (const attr of Array.from(el.attributes)) {
+    const rawName = attr.name;
+    const rawVal = attr.value;
+
+    if (rawName === "style") {
+      // styleStringToObject returns "{ a: 'x', b: 'y' }"; wrap once more for JSX -> style={{ ... }}
+      out += " style={" + styleStringToObject(rawVal) + "}";
+      continue;
+    }
+
+    const jsxName = camelCaseAttr(rawName);
+
+    // Boolean attribute with empty value in source, e.g. <input disabled>
+    if (BOOLEAN_ATTRS.has(rawName.toLowerCase()) && (rawVal === "" || rawVal === rawName)) {
+      out += " " + jsxName;
+      continue;
+    }
+
+    // Standard attribute with a string value
+    const escaped = rawVal.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+    out += " " + jsxName + '="' + escaped + '"';
+  }
+  return out;
+}
+
+function serializeNode(node, indent) {
+  const pad = "  ".repeat(indent);
+
+  if (node.nodeType === Node.TEXT_NODE) {
+    const text = node.textContent;
+    if (!text.trim()) return "";
+    // Escape braces which are special in JSX
+    return pad + text.trim().replace(/\{/g, "&#123;").replace(/\}/g, "&#125;") + "\n";
+  }
+
+  if (node.nodeType === Node.COMMENT_NODE) {
+    const c = node.textContent.replace(/\*\//g, "* /");
+    return pad + "{/*" + c + "*/}\n";
+  }
+
+  if (node.nodeType !== Node.ELEMENT_NODE) return "";
+
+  const tag = node.tagName.toLowerCase();
+  const attrs = serializeAttrs(node);
+  const children = Array.from(node.childNodes);
+
+  if (VOID.has(tag) || (children.length === 0 && isSelfClosableEmpty(tag))) {
+    return pad + "<" + tag + attrs + " />\n";
+  }
+
+  // No children
+  const kids = children.map((c) => serializeNode(c, indent + 1)).join("");
+  if (!kids.trim()) {
+    if (children.length === 0) return pad + "<" + tag + attrs + " />\n";
+    return pad + "<" + tag + attrs + "></" + tag + ">\n";
+  }
+  return pad + "<" + tag + attrs + ">\n" + kids + pad + "</" + tag + ">\n";
+}
+
+function isSelfClosableEmpty(tag) {
+  // Non-void tags with no children still get an explicit closing tag in JSX,
+  // but empties like <div></div> are fine either way. Keep explicit close for clarity.
+  return false;
+}
+
+function convert() {
+  $("error-box").innerHTML = "";
+  const src = $("html-input").value;
+  if (!src.trim()) { $("jsx-output").value = ""; return; }
+
+  let doc;
+  try {
+    // Parse as a document fragment via a template-like body. DOMParser does not execute scripts.
+    doc = new DOMParser().parseFromString("<div id=\"__root__\">" + src + "</div>", "text/html");
+  } catch (e) {
+    $("error-box").innerHTML = '<div class="error-msg">Could not parse the HTML: ' + escapeText(e.message) + '</div>';
+    return;
+  }
+  const root = doc.getElementById("__root__");
+  if (!root) {
+    $("error-box").innerHTML = '<div class="error-msg">Could not parse the HTML.</div>';
+    return;
+  }
+
+  const nodes = Array.from(root.childNodes);
+  let jsx = nodes.map((n) => serializeNode(n, 0)).join("");
+  jsx = jsx.replace(/\n+$/, "");
+
+  // If more than one top-level element, note that JSX needs a single root or a fragment.
+  const topEls = nodes.filter((n) => n.nodeType === Node.ELEMENT_NODE);
+  if (topEls.length > 1) {
+    jsx = "<>\n" + jsx.split("\n").map((l) => l ? "  " + l : l).join("\n") + "\n</>";
+  }
+
+  $("jsx-output").value = jsx;
+}
+
+function escapeText(s) {
+  return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+
+$("convert-btn").addEventListener("click", convert);
+$("html-input").addEventListener("input", convert);
+
+$("clear-btn").addEventListener("click", () => {
+  $("html-input").value = "";
+  $("jsx-output").value = "";
+  $("error-box").innerHTML = "";
+});
+
+$("copy-btn").addEventListener("click", () => {
+  const text = $("jsx-output").value;
+  if (!text) return;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = $("copy-btn");
+    const old = btn.textContent;
+    btn.textContent = "Copied";
+    setTimeout(() => { btn.textContent = old; }, 1200);
+  }).catch(() => {});
+});
+
+const EXAMPLE = [
+  '<!-- A sign-up card -->',
+  '<div class="card" style="max-width: 320px; padding: 1rem;">',
+  '  <label for="email">Email address</label>',
+  '  <input id="email" type="email" placeholder="you@example.com" tabindex="1" required>',
+  '  <br>',
+  '  <button class="btn" onclick="submitForm()" disabled>Sign up</button>',
+  '  <svg viewBox="0 0 24 24" stroke-width="2" fill="none">',
+  '    <path d="M5 12h14" stroke-linecap="round"></path>',
+  '  </svg>',
+  '  <img src="logo.png" alt="Logo">',
+  '</div>'
+].join("\n");
+
+$("example-btn").addEventListener("click", () => {
+  $("html-input").value = EXAMPLE;
+  convert();
+});
+
+setTheme("light");
+</script>
+</body>
+</html>
