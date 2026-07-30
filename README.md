@@ -30,6 +30,10 @@ The HTML is parsed with the browser's `DOMParser` into a real DOM tree. `DOMPars
 
 Everything runs client-side in your browser. The markup you paste never leaves your machine. There are no network requests, no analytics, and no external dependencies. Check the page source or your browser network tab to confirm.
 
+## More
+
+Part of a catalog of single-file browser tools and plain-language references, all MIT licensed and dependency-free: [0xelitesystem.github.io](https://0xelitesystem.github.io/). Built by [elitesystem.ai](https://elitesystem.ai).
+
 ## License
 
 MIT. Copyright 0xelitesystem 2026.
